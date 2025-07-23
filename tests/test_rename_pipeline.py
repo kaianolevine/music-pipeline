@@ -1,5 +1,5 @@
 import pytest
-from your_package import rename_pipeline
+from src.rename_pipeline import rename_pipeline
 
 def test_sanitize_filename():
     assert rename_pipeline.sanitize_filename("Song Name (Remix)!") == "Song_Name_Remix"
