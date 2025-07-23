@@ -3,6 +3,9 @@ name = "rename-drive-pipeline"
 version = "0.1.0"
 description = "Rename and move music files from Google Drive using metadata via GitHub Actions"
 authors = ["Your Name <you@example.com>"]
+packages = [
+    { include = "rename_pipeline", from = "src" }
+]
 
 [tool.poetry.dependencies]
 python = "^3.10"

@@ -29,6 +29,8 @@ jobs:
 
       - name: Install dependencies with Poetry
         run: poetry install --no-interaction
+      - name: Run tests
+        run: poetry run pytest
 
       - name: Run flake8
         run: poetry run flake8 --max-line-length=99 src/ tests/
