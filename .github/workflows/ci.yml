@@ -1,39 +1,34 @@
-name: CI Pipeline
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+name: CI
+
+on: [push, pull_request]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
-    env:
-      SPOTIFY_CLIENT_ID: ${{ secrets.SPOTIFY_CLIENT_ID }}
-      SPOTIFY_CLIENT_SECRET: ${{ secrets.SPOTIFY_CLIENT_SECRET }}
-      M3U_FOLDER_ID: 1FzuuO3xmL2n-8pZ_B-FyrvGWaLxLED3o
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.13'
+          python-version: '3.11'
 
       - name: Install Poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: '1.8.2'
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run tests with coverage and generate HTML report
         run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+          poetry run coverage erase
+          poetry run pytest --cov=rename_pipeline --cov-report=html
 
-      - name: Install dependencies with Poetry
-        run: poetry install --no-interaction
-      - name: Run tests
-        run: poetry run pytest
-
-      - name: Run flake8
-        run: poetry run flake8 --max-line-length=99 src/ tests/
-
-      - name: Run tests with coverage
-        run: poetry run pytest --cov=src/ tests/
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-coverage-report
+          path: htmlcov/
