@@ -14,6 +14,18 @@ SOURCE_FOLDER_ID = "YOUR_SOURCE_FOLDER_ID"
 DEST_FOLDER_ID = "YOUR_DEST_FOLDER_ID"
 
 
+def rename_music_files(directory):
+    for filename in os.listdir(directory):
+        full_path = os.path.join(directory, filename)
+        if os.path.isfile(full_path):
+            metadata = get_metadata(full_path)
+            if metadata:
+                title, artist, bpm = metadata
+                new_name = f"{bpm}__{sanitize_filename(title)}__{sanitize_filename(artist)}.mp3"
+                new_path = os.path.join(directory, new_name)
+                os.rename(full_path, new_path)
+
+
 def sanitize_filename(value):
     value = re.sub(r"\s+", "_", value)
     return re.sub(r"[^a-zA-Z0-9_\-]", "", value)
