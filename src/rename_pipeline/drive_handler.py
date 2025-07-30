@@ -58,3 +58,17 @@ def upload_file(service, filepath, folder_id):
     file_metadata = {"name": os.path.basename(filepath), "parents": [folder_id]}
     media = MediaFileUpload(filepath, resumable=True)
     service.files().create(body=file_metadata, media_body=media, fields="id").execute()
+
+
+def process_drive_folder():
+    service = authenticate()
+    music_files = list_music_files(service, SOURCE_FOLDER_ID)
+
+    for file in music_files:
+        temp_path = os.path.join(tempfile.gettempdir(), file["name"])
+        download_file(service, file["id"], temp_path)
+        print(f"Downloaded: {file['name']}")
+        renamed_path = rename_music_file(temp_path, tempfile.gettempdir())
+        print(f"Renamed to: {os.path.basename(renamed_path)}")
+        upload_file(service, renamed_path, DEST_FOLDER_ID)
+        print(f"Uploaded: {os.path.basename(renamed_path)}")
