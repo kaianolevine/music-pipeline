@@ -1,5 +1,6 @@
 import os
 import re
+from typing import Dict
 from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.mp4 import MP4
@@ -102,3 +103,49 @@ def rename_music_files(directory):
                 new_name = f"{bpm}__{sanitize_filename(title)}__{sanitize_filename(artist)}.mp3"
                 new_path = os.path.join(directory, new_name)
                 os.rename(full_path, new_path)
+
+
+def rename_files_in_directory(directory: str, config: Dict) -> None:
+    # logger.info(f"Scanning directory: {directory}")
+    for root, _, files in os.walk(directory):
+        for file in files:
+            try:
+                full_path = os.path.join(root, file)
+                if not os.path.isfile(full_path):
+                    continue
+                metadata = get_metadata(full_path)
+                new_name = generate_filename(metadata, config)
+                if not new_name:
+                    # logger.warning(f"Skipping file due to missing metadata: {file}")
+                    continue
+                new_path = os.path.join(root, new_name)
+                if new_path != full_path:
+                    os.rename(full_path, new_path)
+                    # logger.info(f"Renamed: {file} -> {new_name}")
+            except Exception:  # as e:
+                pass
+                # logger.error(f"Failed to rename file: {file}. Error: {e}")
+
+
+def generate_filename(metadata: Dict[str, str], config: Dict) -> str:
+    """
+    Generate a sanitized filename based on selected metadata fields and config-defined order.
+
+    Args:
+        metadata: A dictionary with keys like 'bpm', 'title', 'artist', 'comment'.
+        config: A dictionary with a key 'order' specifying the field order for filenames.
+
+    Returns:
+        A string filename with sanitized fields, joined by '__', or None if required fields are missing.
+    """
+    filename_parts = []
+    for field in config.get("order", []):
+        value = metadata.get(field, "")
+        if not value and field in config.get("required_fields", []):
+            return None  # skip if a required field is missing
+        sanitized = sanitize_filename(value)
+        if sanitized:
+            filename_parts.append(sanitized)
+    if not filename_parts:
+        return None
+    return "__".join(filename_parts) + config.get("extension", ".mp3")
