@@ -5,6 +5,11 @@ from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.mp4 import MP4
 from mutagen.easyid3 import EasyID3
+import logging
+
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 
 def new_sanitize_filename(value):
@@ -20,7 +25,7 @@ def sanitize_filename(value):
     return re.sub(r"[^a-zA-Z0-9_\-]", "", value)
 
 
-def new_get_metadata(file_path):
+def get_metadata(file_path):
     ext = file_path.lower().split(".")[-1]
     audio = None
     if ext == "mp3":
@@ -35,7 +40,11 @@ def new_get_metadata(file_path):
     tags = audio.tags or {}
     artist = tags.get("artist", ["Unknown"])[0]
     title = tags.get("title", ["Unknown"])[0]
-    bpm = tags.get("bpm", [""])[0]
+    bpm_raw = tags.get("bpm", [""])[0]
+    try:
+        bpm = str(int(round(float(bpm_raw))))
+    except (ValueError, TypeError):
+        bpm = ""
     comment = tags.get("comment", [""])[0]
 
     return {
@@ -44,38 +53,6 @@ def new_get_metadata(file_path):
         "bpm": str(bpm),
         "comment": str(comment),
     }
-
-
-def get_metadata(file_path):
-    ext = file_path.lower().split(".")[-1]
-    try:
-        if ext == "mp3":
-            audio = MP3(file_path, ID3=EasyID3)
-            bpm = audio.get("bpm", ["Unknown"])[0]
-        elif ext in ["m4a", "mp4"]:
-            audio = MP4(file_path)
-            bpm = audio.tags.get("©\xa9tmp", ["Unknown"])[0]
-        elif ext == "flac":
-            audio = FLAC(file_path)
-            bpm = audio.get("bpm", ["Unknown"])[0]
-        else:
-            return None
-
-        title = audio.get("title", ["Unknown"])[0]
-        artist = audio.get("artist", ["Unknown"])[0]
-
-        title = sanitize_filename(title)
-        artist = sanitize_filename(artist)
-
-        try:
-            bpm = str(round(float(bpm)))
-        except (ValueError, TypeError):
-            bpm = "Unknown"
-
-        return title, artist, bpm
-    except Exception as e:
-        print(f"Metadata error: {e}")
-        return None
 
 
 def rename_music_file(file_path, output_dir):
@@ -89,6 +66,7 @@ def rename_music_file(file_path, output_dir):
     cleaned_parts = [sanitize_filename(p) for p in filename_parts if p]
     new_filename = "__".join(cleaned_parts) + os.path.splitext(file_path)[1]
     new_path = os.path.join(output_dir, new_filename)
+    logging.debug(f"Renaming {file_path} to {new_path}")
     os.rename(file_path, new_path)
     return new_path
 
@@ -99,6 +77,7 @@ def rename_music_files(directory):
         if os.path.isfile(full_path):
             metadata = get_metadata(full_path)
             if metadata:
+                logging.debug(f"Renaming {full_path} using metadata: {metadata}")
                 title, artist, bpm = metadata
                 new_name = f"{bpm}__{sanitize_filename(title)}__{sanitize_filename(artist)}.mp3"
                 new_path = os.path.join(directory, new_name)
@@ -106,7 +85,7 @@ def rename_music_files(directory):
 
 
 def rename_files_in_directory(directory: str, config: Dict) -> None:
-    # logger.info(f"Scanning directory: {directory}")
+    logging.info(f"Scanning directory: {directory}")
     for root, _, files in os.walk(directory):
         for file in files:
             try:
@@ -116,15 +95,16 @@ def rename_files_in_directory(directory: str, config: Dict) -> None:
                 metadata = get_metadata(full_path)
                 new_name = generate_filename(metadata, config)
                 if not new_name:
-                    # logger.warning(f"Skipping file due to missing metadata: {file}")
+                    logging.warning(f"Skipping file due to missing metadata: {file}")
                     continue
                 new_path = os.path.join(root, new_name)
                 if new_path != full_path:
+                    logging.debug(f"Renaming file: {file} -> {new_name}")
                     os.rename(full_path, new_path)
-                    # logger.info(f"Renamed: {file} -> {new_name}")
-            except Exception:  # as e:
-                pass
-                # logger.error(f"Failed to rename file: {file}. Error: {e}")
+                    logging.info(f"Renamed: {file} -> {new_name}")
+            except Exception as e:
+                logging.error(f"Failed to rename file: {file}", exc_info=True)
+                logging.error(f"Failed to rename file: {file}. Error: {e}")
 
 
 def generate_filename(metadata: Dict[str, str], config: Dict) -> str:
@@ -138,14 +118,23 @@ def generate_filename(metadata: Dict[str, str], config: Dict) -> str:
     Returns:
         A string filename with sanitized fields, joined by '__', or None if required fields are missing.
     """
+    logging.debug(
+        f"Generating filename using metadata: {metadata} and config: {config}"
+    )
     filename_parts = []
-    for field in config.get("order", []):
+    for field in config.get("rename_order", []):
         value = metadata.get(field, "")
+        logging.debug(f"Field: {field}, Value: {value}")
         if not value and field in config.get("required_fields", []):
+            logging.debug(
+                f"Required field '{field}' is missing, skipping filename generation."
+            )
             return None  # skip if a required field is missing
         sanitized = sanitize_filename(value)
         if sanitized:
             filename_parts.append(sanitized)
     if not filename_parts:
+        logging.debug("No valid fields found for filename generation, returning None.")
         return None
+    logging.debug(f"Generated filename: {'__'.join(filename_parts)}")
     return "__".join(filename_parts) + config.get("extension", ".mp3")
