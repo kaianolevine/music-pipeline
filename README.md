@@ -70,17 +70,22 @@ If no output folder is specified, renamed files will be saved in-place.
 
 ## 🧪 Testing
 
-### Run tests and check coverage
+### 🧪 Running Tests
 
 ```bash
-poetry run pytest --cov=rename_pipeline --cov-report=term-missing
+poetry run pytest
 ```
 
-### Generate HTML coverage report
+### With coverage
 
 ```bash
-poetry run coverage html
-open htmlcov/index.html  # macOS
+poetry run pytest --cov=rename_pipeline --cov-report=html
+```
+
+### To erase coverage data:
+
+```bash
+poetry run coverage erase
 ```
 
 ---
@@ -92,9 +97,10 @@ We use [pre-commit](https://pre-commit.com/) to enforce:
 - `black`: auto-formatting
 - `flake8`: linting
 
-To run all hooks manually:
+Install and run all pre-commit hooks:
 
 ```bash
+poetry run pre-commit install
 poetry run pre-commit run --all-files
 ```
 
