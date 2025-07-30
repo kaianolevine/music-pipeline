@@ -1,32 +1,39 @@
-name: Rename and Upload Music Files
+name: Manual Music Pipeline Run
 
 on:
   workflow_dispatch:
+    inputs:
+      folder_id:
+        description: "Google Drive Folder ID to process"
+        required: true
+        type: string
 
 jobs:
-  rename-music:
+  manual-run:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
 
-      - name: Set up Python
+    env:
+      MODE: ci
+      FOLDER_ID: ${{ inputs.folder_id }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
-      - name: Install Poetry
-        run: |
-          curl -sSL https://install.python-poetry.org | python3 -
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: 📦 Install Poetry
+        run: pip install poetry
 
-      - name: Install dependencies
-        run: |
-          poetry install
+      - name: 📦 Install dependencies
+        run: poetry install
 
-      - name: Decode and save Google credentials
-        run: |
-          echo "${{ secrets.GDRIVE_CREDENTIALS_JSON }}" | base64 --decode > credentials.json
+      - name: ✅ Run tests
+        run: poetry run pytest --cov=rename_pipeline --cov-report=term-missing
 
-      - name: Run renaming pipeline
-        run: |
-          poetry run python src/rename_pipeline.py
+      - name: 🚀 Run Music Pipeline on Demand
+        run: poetry run music-pipeline
+        

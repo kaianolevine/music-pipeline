@@ -7,6 +7,9 @@ license = "MIT"
 readme = "README.md"
 packages = [{ include = "rename_pipeline", from = "src" }]
 
+[tool.poetry.scripts]
+music-pipeline = "rename_pipeline.main:main"
+
 [tool.poetry.dependencies]
 python = "^3.10"
 mutagen = "^1.47.0"

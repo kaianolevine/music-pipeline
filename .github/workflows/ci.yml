@@ -1,34 +1,35 @@
-name: CI
+name: Music Pipeline CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 jobs:
-  test:
+  run-pipeline:
     runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+    env:
+      MODE: ci
+      FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Install Poetry
-        uses: abatilo/actions-poetry@v2
-        with:
-          poetry-version: '1.8.2'
+      - name: 📦 Install Poetry
+        run: pip install poetry
 
-      - name: Install dependencies
+      - name: 📦 Install dependencies
         run: poetry install
 
-      - name: Run tests with coverage and generate HTML report
-        run: |
-          poetry run coverage erase
-          poetry run pytest --cov=rename_pipeline --cov-report=html
+      - name: ✅ Run tests
+        run: poetry run pytest --cov=rename_pipeline --cov-report=term-missing
 
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          name: html-coverage-report
-          path: htmlcov/
+      - name: 🚀 Run Music Pipeline
+        run: poetry run music-pipeline
