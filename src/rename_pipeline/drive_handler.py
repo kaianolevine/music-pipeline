@@ -7,12 +7,26 @@ import os
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
+import json
 
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 CREDENTIALS_PATH = "credentials.json"
 SOURCE_FOLDER_ID = "YOUR_SOURCE_FOLDER_ID"
 DEST_FOLDER_ID = "YOUR_DEST_FOLDER_ID"
+
+
+def authenticate():
+    if os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"):
+        info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"))
+        creds = service_account.Credentials.from_service_account_info(
+            info, scopes=SCOPES
+        )
+    else:
+        creds = service_account.Credentials.from_service_account_file(
+            CREDENTIALS_PATH, scopes=SCOPES
+        )
+    return build("drive", "v3", credentials=creds)
 
 
 def download_and_rename_files_from_drive(folder_id, local_output_dir):
@@ -30,13 +44,6 @@ def download_and_rename_files_from_drive(folder_id, local_output_dir):
         print(f"Downloaded: {file['title']}")
         new_path = rename_music_file(temp_path, local_output_dir)
         print(f"Renamed: {new_path}")
-
-
-def authenticate():
-    creds = service_account.Credentials.from_service_account_file(
-        CREDENTIALS_PATH, scopes=SCOPES
-    )
-    return build("drive", "v3", credentials=creds)
 
 
 def list_music_files(service, folder_id):

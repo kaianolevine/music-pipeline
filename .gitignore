@@ -69,3 +69,5 @@ venv.bak/
 *.flac
 *.aiff
 *.m4a
+credentials.base64
+credentials.json
