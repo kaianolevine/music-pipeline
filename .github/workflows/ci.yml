@@ -19,6 +19,7 @@ jobs:
     env:
       MODE: ci
       GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+      TEST_DRIVE_FOLDER_ID: ${{ secrets.TEST_DRIVE_FOLDER_ID }}
 
     steps:
       - name: 📥 Checkout code
