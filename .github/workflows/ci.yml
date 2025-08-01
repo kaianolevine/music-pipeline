@@ -16,6 +16,10 @@ jobs:
     name: 🧪 Run tests & linting
     runs-on: ubuntu-latest
 
+    env:
+      MODE: ci
+      GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
+
     steps:
       - name: 📥 Checkout code
         uses: actions/checkout@v3
@@ -45,6 +49,7 @@ jobs:
 
     env:
       MODE: ci
+      GOOGLE_SERVICE_ACCOUNT_JSON: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_JSON }}
       FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
 
     steps:
