@@ -122,3 +122,57 @@ poetry run pre-commit run --all-files
 - Only `.mp3`, `.m4a`, `.mp4`, `.flac` files are supported.
 - Missing or corrupt metadata will be skipped unless handled explicitly.
 - You can mock metadata in tests to simulate edge cases.
+
+---
+
+## 🚀 GitHub Actions Integration for Google Drive Testing
+
+To enable integration testing of Google Drive functionality in CI:
+
+### 🔐 Required Secrets
+
+Go to your GitHub repository → Settings → Secrets and Variables → Actions, and add the following:
+
+#### Option 1 (Raw JSON)
+
+- **Name**: `GOOGLE_SERVICE_ACCOUNT_JSON`
+- **Value**: Paste the full raw JSON content of your service account key.
+
+#### Option 2 (Recommended - Base64-encoded)
+
+- **Name**: `GOOGLE_SERVICE_ACCOUNT_JSON_BASE64`
+- **Value**: Base64-encoded service account JSON (safer for multiline content).
+
+To encode:
+
+```bash
+base64 -i credentials.json | pbcopy  # macOS
+base64 -w 0 credentials.json | xclip # Linux
+```
+
+Then decode it in your script:
+
+```python
+import os, json, base64
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+
+def authenticate():
+    encoded = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON_BASE64")
+    if encoded:
+        info = json.loads(base64.b64decode(encoded).decode("utf-8"))
+    else:
+        info = json.loads(os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON"))
+
+    creds = service_account.Credentials.from_service_account_info(info, scopes=["https://www.googleapis.com/auth/drive"])
+    return build("drive", "v3", credentials=creds)
+```
+
+#### (Optional) Google Drive Folder for Tests
+
+- **Name**: `TEST_DRIVE_FOLDER_ID`
+- **Value**: A folder ID in Drive that the service account has write access to.
+
+Tests that upload or download files will use this folder if present.
+
+---

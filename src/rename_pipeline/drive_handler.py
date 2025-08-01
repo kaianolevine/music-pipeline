@@ -12,8 +12,8 @@ import json
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
 CREDENTIALS_PATH = "credentials.json"
-SOURCE_FOLDER_ID = "YOUR_SOURCE_FOLDER_ID"
-DEST_FOLDER_ID = "YOUR_DEST_FOLDER_ID"
+SOURCE_FOLDER_ID = "1Y8OaKK_VRq1E7XeHj4B0dwHg0tLsjplI"
+DEST_FOLDER_ID = "1ztp1E81rKeCqwC6WBNOcrlqC2sB8ddqf"
 
 
 def authenticate():
